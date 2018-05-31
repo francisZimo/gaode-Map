@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <style type="text/css">
+        body,html,#container{
+            height: 100%;
+            margin: 0px;
+        }
+    </style>
+    <title>行政区划图</title>
+</head>
+<body>
+<div id="container" tabindex="0"></div>
+<script type="text/javascript" src="http://webapi.amap.com/maps?v=1.4.6&key=e0fa1a9286827251c84ccddfaebda47c"></script>
+<!-- UI组件库 1.0 -->
+<script src="//webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
+<script type="text/javascript">
+var map=new AMap.Map('container',{
+    zoom:4,
+    zooms:[4,18]
+})
+var currentAreaNode=null;
+//var colors=['#ef5c5c','#5cef7d']
+var colors=['#5cef7d']
+    AMapUI.load(['ui/geo/DistrictExplorer','lib/$'],function(DistrictExplorer,$){
+        //创建一个实例
+        var districtExplorer=window.districtExplorer=new DistrictExplorer({
+            eventSupport:true,
+            map:map
+        })
+
+        //绘制行政区划边界
+        function renderAreaPolygons(areaNode) {
+            //绘制areaNode中的子级区划(SubFeature)
+            //renderSubFeatures中回调函数参数-》
+            //@param  {Feature} subFeature 子级区划的Feature
+            //@param  {number} index 子级区划的数组索引
+            //@return polygonOptions
+            districtExplorer.renderSubFeatures(areaNode, function (feature, i) {
+//                var fillColor = colors[Math.floor(Math.random() * 2)];
+                console.log('次数')
+                var fillColor = colors[0];
+                var strokeColor = '#000'
+                return {
+                    cursor: 'pointer',
+                    bubble: true,
+                    strokeColor: strokeColor, //线颜色
+                    strokeOpacity: 1,//线透明度
+                    strokeWeight: 1,//线宽
+                    fillColor: fillColor,//填充色
+                    fillOpacity: 0.8
+                };
+            })
+            //绘制父区域
+            districtExplorer.renderParentFeature(areaNode, {
+                cursor:'default',
+                bubble:true,
+                strokeColor:'#e85d5d',
+                strokeOpacity: 1, //线透明度
+                strokeWeight: 1, //线宽
+                fillColor: null, //填充色
+                fillOpacity: 1 //填充透明度
+            })
+        }
+        function loadAreaNode(adcode,callback){
+            districtExplorer.loadAreaNode(adcode,function(error,areaNode){
+                if(callback){
+                    callback(null,areaNode)
+                }
+            })
+        }
+        //切换区域后刷新显示内容
+        function refreshAreaNode(areaNode){
+            renderAreaPolygons(areaNode)
+        }
+
+        //切换区域
+        function switch2AreaNode(adcode,callback){
+            loadAreaNode(adcode,function(error,areaNode){
+                currentAreaNode=window.currentAreaNode=areaNode;
+                //设置当前使用的定位用节点
+                districtExplorer.setAreaNodesForLocating([currentAreaNode]);
+                refreshAreaNode(areaNode)
+            })
+
+        }
+        switch2AreaNode(100000)
+    })
+
+
+</script>
+</body>
+</html>

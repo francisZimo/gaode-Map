@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <style type="text/css">
+        body,html,#container{
+            height: 100%;
+            margin: 0px;
+            font:12px Arial;
+        }
+        .taiwan{
+            border: solid 1px red;
+            color: red;
+            float: left;
+            width: 50px;
+            background-color: rgba(255,0,0,0.1)
+        }
+        .circle{
+            border-radius: 6px;
+            border: solid 1px silver;
+            width: 35px;
+            height: 16px;
+            padding: 3px;
+            text-align: center;
+            line-height: 18px;
+            max-width: 50px;
+            color:white;
+        }
+    </style>
+    <title>Marker example</title>
+</head>
+<body>
+<div id="container" tabindex="0"></div>
+<script src="https://webapi.amap.com/js/marker.js"></script>
+<script src="https://webapi.amap.com/maps?v=1.4.2&key=e0fa1a9286827251c84ccddfaebda47c"></script>
+<script type="text/javascript">
+
+    var map = new AMap.Map('container',{resizeEnable: true,zoom:4});
+    var markers = []; //province见Demo引用的JS文件
+    var createMarker = function(data,hide) {
+        var div = document.createElement('div');
+        div.className = 'circle';
+        var r = Math.floor(data.count / 1024);
+        div.style.backgroundColor = 'rgb('+r*8+',100,255)';
+        div.innerHTML = data.count || 0;
+        var marker = new AMap.Marker({
+            content: div,
+            title:data.name,
+            position: data.center.split(','),
+            offset: new AMap.Pixel(-30, 5),
+            zIndex: data.count
+        });
+        marker.subMarkers = [];
+        if(!hide){
+            marker.setMap(mapObj)
+        }
+        if(data.subDistricts&&data.subDistricts.length){
+            for(var i = 0 ; i < data.subDistricts.length; i += 1){
+                marker.subMarkers.push(createMarker(data.subDistricts[i],true));
+            }
+        }
+        return marker;
+    }
+    for (var i = 0; i < provinces.length; i += 1) {
+        var marker;
+        if (provinces[i].type === 0) {
+            var icon = new AMap.Icon({
+                image: 'https://vdata.amap.com/icons/b18/1/2.png',
+                size: new AMap.Size(24, 24)
+            });
+            marker = new AMap.Marker({
+                icon: icon,
+                position: provinces[i].center.split(','),
+                offset: new AMap.Pixel(-12,-12),
+                zIndex: 101,
+                title: provinces[i].name,
+                map: map
+            });
+        } else {
+            marker = new AMap.Marker({
+                position: provinces[i].center.split(','),
+                title: provinces[i].name,
+                map: map
+            });
+
+
+            if (provinces[i].type === 2) {
+                var content= "<div class = 'taiwan'>宝岛台湾</div>";
+                baodao = new AMap.Marker({
+                    content: content,
+                    position: provinces[i].center.split(','),
+                    title: provinces[i].name,
+                    offset: new AMap.Pixel(0,0),
+                    map: map
+                });
+            }
+        }
+        markers.push(marker);
+    }
+
+    map.setFitView();
+</script>
+<script type="text/javascript" src="https://webapi.amap.com/demos/js/liteToolbar.js"></script>
+</body>
+</html>

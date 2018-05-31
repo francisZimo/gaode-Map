@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- 原始地址：//webapi.amap.com/ui/1.0/ui/geo/DistrictCluster/examples/feature-style.html -->
+    <base href="//webapi.amap.com/ui/1.0/ui/geo/DistrictCluster/examples/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>区划面样式</title>
+    <style>
+        html,
+        body,
+        #container {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+        }
+
+        #loadingTip {
+            position: absolute;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            padding: 3px 10px;
+            background: red;
+            color: #fff;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <script type="text/javascript" src='//webapi.amap.com/maps?v=1.4.6&key=e0fa1a9286827251c84ccddfaebda47c'></script>
+    <script src="//webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
+    <script>
+        var map=new AMap.Map('container',{
+            zoom:4,
+        })
+        var createMarker=function(data,hide){
+            var div=document.createElement('div');
+            div.className='circle';
+            div.style.backgroundColor=hide?'#393':'#09f';
+            div.innerHTML=data.count||0;
+            var marker=new AMap.Marker({
+                content:div,
+                title:data.name,
+                position:data.center.split(','),
+                offset:new AMap.Pixel(-24,5),
+                zIndex:data.count
+            })
+            marker.subMarkers=[];
+            if(data.name==='北京市'||data.name==='河南省'){
+                marker.setLabel({content:'&larr;请点击',offset:new AMap.Pixel(45,0)})
+            }
+            if(!hide){
+                marker.setMap(map)
+            }
+            if(data.subDistricts&&data.subDistricts.length){
+                for(var i = 0 ; i<data.subDistricts.length;i+=1){
+                    marker.subMarkers.push(createMarker(data.subDistricts[i],true));
+                }
+            }
+            return marker;
+        }
+        function initPage(DistrictCluster, $){
+            var distCluster=new DistrictCluster({
+                map:map,
+                zIndex:11,
+                getPosition:function(item){
+                    if(!item){
+                        return null
+                    }
+                    var parts=item.split(',');
+                    return[parseFloat(parts[0]), parseFloat(parts[1])]
+                },
+                renderOptions:{
+                    //基础样式
+//                    featureStyle: {
+//                        fillStyle: 'rgba(102,170,0,0.5)', //填充色
+//                        lineWidth: 2, //描边线宽
+//                        strokeStyle: 'rgb(31, 119, 180)', //描边色
+//                        //鼠标Hover后的样式
+//                        hoverOptions: {
+//                            fillStyle: 'rgba(255,255,255,0.5)'
+//                        }
+//                    },
+                    //特定区划级别的默认样式
+//                    featureStyleByLevel: {
+//                        //全国
+//                        country: {
+//                            fillStyle: 'rgba(49, 163, 84, 0.8)'
+//                        },
+//                        //省
+//                        province: {
+//                            fillStyle: 'rgba(116, 196, 118, 0.7)'
+//                        },
+//                        //市
+//                        city: {
+//                            fillStyle: 'rgba(161, 217, 155, 0.6)'
+//                        },
+//                        //区县
+//                        district: {
+//                            fillStyle: 'rgba(199, 233, 192, 0.5)'
+//                        }
+//                    },
+                    //直接定义某写区划面的样式
+//                    getFeatureStyle: function(feature, dataItems) {
+//
+//                        if (dataItems.length > 10000) {
+//                            return {
+//                                fillStyle: 'rgba(223,39,21,0.9)'
+//                            };
+//                        } else if (dataItems.length > 8000) {
+//                            return {
+//                                fillStyle: 'rgba(223,39,21,0.7)'
+//                            };
+//                        } else if(dataItems.length > 6000){
+//                            return {
+//                                fillStyle: 'rgba(223,39,21,0.5)'
+//                            };
+//                        }else if(dataItems.length > 4000){
+//                            return {
+//                                fillStyle: 'rgba(223,39,21,0.3)'
+//                            };
+//                        }
+//                        else if(dataItems.length > 2000){
+//                            return {
+//                                fillStyle: 'rgba(223,39,21,0.2)'
+//                            };
+//                        }
+//                        else if(dataItems.length > 0){
+//                            return {
+//                                fillStyle: 'rgba(223,39,21,0.1)'
+//                            };
+//                        }
+//                        return {};
+//                    }
+                }
+            });
+            window.distCluster=distCluster;
+            $('<div id="loadingTip">加载数据，请稍候...</div>').appendTo(document.body);
+            $.get('http://a.amap.com/amap-ui/static/data/10w.txt', function(csv) {
+
+                $('#loadingTip').remove();
+
+                var data = csv.split('\n');
+
+                distCluster.setData(data);
+            });
+        }
+        //加载相关组件
+        AMapUI.load(['ui/geo/DistrictCluster', 'lib/$'], function(DistrictCluster, $) {
+            //启动页面
+            initPage(DistrictCluster, $);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<script>
+//    function test2(err,callback){
+//        callback(null,'我的名字')
+//    }
+//    test2('',function(err,data){
+//        console.log(data)
+//    })
+    function add(num1,num2,back){
+        var sum=num1+num2;
+        back('',sum)
+    }
+    add(1,2,function(err,data){
+        console.log(data)
+    })
+</script>
+</body>
+</html>

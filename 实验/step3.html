@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <link rel="stylesheet" href="lib/area.css">
+    <style type="text/css">
+        body,html,#container{
+            height: 100%;
+            margin: 0px;
+        }
+    </style>
+    <title>行政区划图</title>
+</head>
+<body>
+<div id="container" tabindex="0"></div>
+<script type="text/javascript" src="http://webapi.amap.com/maps?v=1.4.6&key=e0fa1a9286827251c84ccddfaebda47c"></script>
+<!-- UI组件库 1.0 -->
+<script src="//webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
+<script type="text/javascript">
+    var map=new AMap.Map('container',{
+        zoom:4,
+        zooms:[4,18]
+    })
+    var currentAreaNode=null;
+    //var colors=['#ef5c5c','#5cef7d']
+    var colors=['#5cef7d']
+    AMapUI.load(['ui/geo/DistrictExplorer','lib/$'],function(DistrictExplorer,$){
+        //创建一个实例
+        var districtExplorer=window.districtExplorer=new DistrictExplorer({
+            eventSupport:true,
+            map:map
+        })
+        //step2 start
+
+        var $tipMarkerContent = $('<div class="tipMarker top"></div>')
+        var tipMarker=new AMap.Marker({
+            content: $tipMarkerContent.get(0),
+            offset: new AMap.Pixel(0, 0), //浮动的时候估计鼠标光点的距离
+            bubble: true
+        })
+        //根据Hover状态设置相关样式
+        function toggleHoverFeature(feature, isHover, position){
+            tipMarker.setMap(isHover ? map : null); //当前是否鼠标进入区域，如果进入则进行绑定地图，如果没有则为空
+            if(!feature){return} //如果没有feature，也就是没有区域 就直接跳出
+            var props=feature.properties;
+            if(isHover){
+                //更新提示内容
+                $tipMarkerContent.html(props.adcode + ': ' + props.name);
+                //更新位置
+                tipMarker.setPosition(position || props.center);
+            }
+            //更新相关多边形的样式
+            var ploys=districtExplorer.findFeaturePolygonsByAdcode(props.adcode);
+            for(var i= 0,len=ploys.length;i<len;i++){
+                ploys[i].setOptions({
+                    fillOpacity: isHover ? 0.9 : 0.5
+                })
+            }
+        }
+        //监听feature的hover时间
+        districtExplorer.on('featureMouseout featureMouseover',function(e,feature){
+            toggleHoverFeature(feature, e.type==='featureMouseover', e.originalEvent?e.originalEvent.lnglat:null)
+            toggleHoverFeature(feature, e.type==='featureMouseover')
+        })
+        //监听鼠标在feature上滑动
+        districtExplorer.on('featureMousemove',function(e,feature){
+//            console.log(e.originalEvent)
+            tipMarker.setPosition(e.originalEvent.lnglat)
+        })
+        //feature被点击
+        districtExplorer.on('featureClick',function(e,feature){
+            var props=feature.properties;
+            //如果存在子节点
+            if(props.childrenNum>0){
+                switch2AreaNode(props.adcode)
+            }
+        })
+        //外部区域被点击
+        districtExplorer.on('outsideClick',function(e){
+            //用递归方式获取某个经纬度位置所属的各级别区划信息（示例）。
+            //callback函数的类型如下：
+            //@params {error:*}  异常错误，正常情况下为null
+            //@params {Array.<Feature>}  归属区划列表，
+            //从上到下，数量最多4个（全国->省->市->区县)，也可能0个，比如海外区域
+            //options(可选)的属性取值如下：
+            //parentNode: AreaNode，顶级区划节点，默认为全国
+            //levelLimit: number，递归识别的层级限制，比如取2时表示只到省，取3表示只到市
+            districtExplorer.locatePosition(e.originalEvent.lnglat,function(error,routeFeatures){
+                console.log(routeFeatures)
+                if (routeFeatures && routeFeatures.length > 1) {
+                    //切换到省级区域
+                    switch2AreaNode(routeFeatures[1].properties.adcode);
+                } else {
+                    //切换到全国
+                    switch2AreaNode(100000);
+                }
+            },{
+                levelLimit:3
+            })
+        })
+        //step2 end
+        //绘制行政区划边界
+        function renderAreaPolygons(areaNode,companyNum) {
+            //清除已有的绘制内容
+            districtExplorer.clearFeaturePolygons();
+            //绘制areaNode中的子级区划(SubFeature)
+            //renderSubFeatures中回调函数参数-》
+            //@param  {Feature} subFeature 子级区划的Feature
+            //@param  {number} index 子级区划的数组索引
+            //@return polygonOptions
+            districtExplorer.renderSubFeatures(areaNode, function (feature, i) {
+                console.log(feature.properties.name)
+//                var fillColor = colors[Math.floor(Math.random() * 2)];
+                var fillColor = colors[0];
+                if(companyNum>10000){
+                    fillColor='#fbb207';
+                }else if(companyNum>8000){
+                    fillColor='#f19330';
+                }else if(companyNum>6000){
+                    fillColor='#ffa94f';
+                }else if(companyNum>4000){
+                    fillColor='#f9c48d';
+                }else if(companyNum>2000){
+                    fillColor='#f7dabb';
+                }
+                var strokeColor = '#000'
+                return {
+                    cursor: 'pointer',
+                    bubble: true,
+                    strokeColor: strokeColor, //线颜色
+                    strokeOpacity: 1,//线透明度
+                    strokeWeight: 1,//线宽
+                    fillColor: fillColor,//填充色
+                    fillOpacity: 0.5
+                };
+            })
+            //绘制父区域
+            districtExplorer.renderParentFeature(areaNode, {
+                cursor:'default',
+                bubble:true,
+                strokeColor:'#e85d5d',
+                strokeOpacity: 1, //线透明度
+                strokeWeight: 1, //线宽
+                fillColor: null, //填充色
+                fillOpacity: 1 //填充透明度
+            })
+        }
+        function loadAreaNode(adcode,callback){
+            districtExplorer.loadAreaNode(adcode,function(error,areaNode){
+                if(callback){
+                    callback(null,areaNode)
+                }
+            })
+        }
+        //切换区域后刷新显示内容
+        function refreshAreaNode(areaNode,companyNum){
+            districtExplorer.setHoverFeature(null);
+            renderAreaPolygons(areaNode,companyNum)
+        }
+
+        //切换区域
+        function switch2AreaNode(adcode,callback){
+            loadAreaNode(adcode,function(error,areaNode){
+                currentAreaNode=window.currentAreaNode=areaNode;
+                //设置当前使用的定位用节点
+                districtExplorer.setAreaNodesForLocating([currentAreaNode]);
+                refreshAreaNode(areaNode)
+
+            })
+
+        }
+        switch2AreaNode(100000)
+
+    })
+
+
+</script>
+</body>
+</html>

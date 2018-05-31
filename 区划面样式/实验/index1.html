@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- 原始地址：//webapi.amap.com/ui/1.0/ui/geo/DistrictCluster/examples/feature-style.html -->
+    <!--<base href="//webapi.amap.com/ui/1.0/ui/geo/DistrictCluster/examples/" />-->
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>区划面样式</title>
+    <style>
+        html,
+        body,
+        #container {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+        }
+
+        #loadingTip {
+            position: absolute;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            padding: 3px 10px;
+            background: red;
+            color: #fff;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <script type="text/javascript" src='//webapi.amap.com/maps?v=1.4.6&key=e0fa1a9286827251c84ccddfaebda47c'></script>
+    <script src="//webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
+    <script>
+        var map=new AMap.Map('container',{
+            zoom:4,
+        })
+//        var createMarker=function(data,hide){
+//            var div=document.createElement('div');
+//            div.className='circle';
+//            div.style.backgroundColor=hide?'#393':'#09f';
+//            div.innerHTML=data.count||0;
+//            var marker=new AMap.Marker({
+//                content:div,
+//                title:data.name,
+//                position:data.center.split(','),
+//                offset:new AMap.Pixel(-24,5),
+//                zIndex:data.count
+//            })
+//            marker.subMarkers=[];
+//            if(data.name==='北京市'||data.name==='河南省'){
+//                marker.setLabel({content:'&larr;请点击',offset:new AMap.Pixel(45,0)})
+//            }
+//            if(!hide){
+//                marker.setMap(map)
+//            }
+//            if(data.subDistricts&&data.subDistricts.length){
+//                for(var i = 0 ; i<data.subDistricts.length;i+=1){
+//                    marker.subMarkers.push(createMarker(data.subDistricts[i],true));
+//                }
+//            }
+//            return marker;
+//        }
+        function initPage(DistrictCluster, $){
+            var distCluster = new DistrictCluster({
+                map: map, //所属的地图实例
+                //返回数据项中的经纬度位置
+                getPosition: function(item) {
+                    return item.position;
+                }
+            });
+
+            //随机创建一批点，仅作示意
+            var data = createPoints(map.getCenter(), 100000);
+            //设置数据
+            distCluster.setData(data);
+        }
+        function createPoints(center, num) {
+            var data = [];
+            for (var i = 0, len = num; i < len; i++) {
+                data.push({
+                    position: [
+                        center.getLng() + (Math.random() > 0.5 ? 1 : -1) * Math.random() * 30,
+                        center.getLat() + (Math.random() > 0.5 ? 1 : -1) * Math.random() * 20
+                    ]
+                });
+            }
+            return data;
+        }
+        //加载相关组件
+        AMapUI.load(['ui/geo/DistrictCluster', 'lib/$'], function(DistrictCluster, $) {
+            //启动页面
+            initPage(DistrictCluster, $);
+        });
+    </script>
+</body>
+</html>
